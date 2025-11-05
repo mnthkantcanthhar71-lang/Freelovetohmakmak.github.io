@@ -25,14 +25,14 @@
       border-radius: 10px;
     }
     .wish {
-      font-size: 1.2em;
-      margin-top: 15px;
+      font-size: 1.1em;
+      margin: 10px 0;
       color: #ffd60a;
     }
     .controls {
-      margin-top: 10px;
+      margin-top: 5px;
     }
-    button {
+    select, button {
       background: #ffc300;
       color: #000814;
       border: none;
@@ -40,8 +40,9 @@
       border-radius: 20px;
       cursor: pointer;
       font-weight: bold;
+      margin: 5px;
     }
-    button:hover {
+    select:hover, button:hover {
       background: #ffd60a;
     }
   </style>
@@ -52,14 +53,24 @@
     ขอให้ความขัดแย้ง ความเศร้า ความทุกข์ และความสิ้นหวัง <br />
     ลอยทิ้งไปพร้อมกับกระทงของเรา 💛
   </p>
+
   <canvas id="pond" width="400" height="400"></canvas>
+
   <div class="controls">
+    <select id="krathongType">
+      <option value="🌸">กระทงดอกไม้</option>
+      <option value="🕯️">กระทงเทียน</option>
+      <option value="💖">กระทงหัวใจ</option>
+      <option value="🌼">กระทงดาว</option>
+      <option value="🌿">กระทงธรรมชาติ</option>
+    </select>
     <button onclick="release()">ลอยกระทง</button>
   </div>
 
-  <!-- Firebase -->
+  <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js"></script>
+
   <script>
     const firebaseConfig = {
       apiKey: "AIzaSyCwRRNmJYDalK4bugLZJ7x1CDy9VQAFG6o",
@@ -78,33 +89,30 @@
     const canvas = document.getElementById("pond");
     const ctx = canvas.getContext("2d");
 
-    let lanterns = [];
+    let krathongs = [];
 
-    function drawLantern(x, y) {
-      ctx.beginPath();
-      ctx.arc(x, y, 10, 0, 2 * Math.PI);
-      ctx.fillStyle = "#ffd60a";
-      ctx.fill();
-      ctx.strokeStyle = "#ffc300";
-      ctx.stroke();
+    function drawKrathong(k) {
+      ctx.font = "24px serif";
+      ctx.fillText(k.icon, k.x, k.y);
     }
 
     function drawAll() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      lanterns.forEach(l => drawLantern(l.x, l.y));
+      krathongs.forEach(k => drawKrathong(k));
     }
 
-    db.ref("lanterns").on("value", snapshot => {
+    db.ref("krathongs").on("value", snapshot => {
       const data = snapshot.val() || {};
-      lanterns = Object.values(data);
+      krathongs = Object.values(data);
       drawAll();
     });
 
     function release() {
-      const x = Math.random() * 380 + 10;
-      const y = Math.random() * 380 + 10;
+      const x = Math.random() * 360 + 20;
+      const y = Math.random() * 360 + 20;
+      const icon = document.getElementById("krathongType").value;
       const id = Date.now();
-      db.ref("lanterns/" + id).set({ x, y });
+      db.ref("krathongs/" + id).set({ x, y, icon });
     }
   </script>
 </body>
