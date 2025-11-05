@@ -1,401 +1,179 @@
-<!DOCTYPE html>
-<html lang="th">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>FREEloveTOH - ลอยกระทงออนไลน์</title>
-  <style>
-    :root{
-      --moon:#f2ecc9;
-      --water1:#001d3d;
-      --water2:#003566;
-      --accent:#ffd60a;
-    }
-    html,body{height:100%;margin:0;padding:0;font-family:Prompt,system-ui,-apple-system,Segoe UI,Roboto,"Noto Sans Thai",sans-serif;background:linear-gradient(to top,var(--water1),var(--water2));color:#fff}
-    /* scene */
-    .scene{position:relative;height:100vh;overflow:hidden}
-    .moon{
-      position:absolute;left:50%;transform:translateX(-50%);top:6%;
-      width:320px;height:320px;border-radius:50%;background:radial-gradient(circle at 35% 30%, #fff, #f5f2d0 40%, rgba(255,255,255,0.05) 60%);box-shadow:0 0 60px rgba(255,240,180,0.25);
-      z-index:1;filter:blur(.5px);
-    }
-    .stars{position:absolute;inset:0;pointer-events:none;z-index:0}
-    .star{position:absolute;width:2px;height:2px;border-radius:50%;background:rgba(255,255,255,0.9);box-shadow:0 0 6px rgba(255,255,255,0.8);opacity:0.9}
-    .river{position:absolute;left:50%;transform:translateX(-50%);bottom:0;width:95%;max-width:980px;height:55vh;border-radius:30px;background:linear-gradient(180deg,#013e5a,#01293c);box-shadow:0 8px 30px rgba(0,0,0,0.6);overflow:hidden;border:1px solid rgba(255,255,255,0.04)}
-    .river .waves{position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,0.02),transparent);mix-blend-mode:overlay}
-    /* welcome overlay */
-    .overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:5}
-    .card{background:rgba(0,0,0,0.45);backdrop-filter:blur(6px);padding:28px;border-radius:18px;text-align:center;box-shadow:0 8px 30px rgba(0,0,0,0.6)}
-    .card h1{margin:0 0 10px;font-size:28px;color:var(--accent)}
-    .enter-btn{background:var(--accent);color:#001; padding:12px 22px;border-radius:14px;border:none;font-weight:700;cursor:pointer}
-    /* controls */
-    .controls{position:absolute;left:20px;top:20px;z-index:4;width:320px}
-    .controls .panel{background:rgba(0,0,0,0.35);padding:12px;border-radius:12px}
-    label{display:block;margin:8px 0 6px;font-size:14px;color:#e6f7ff}
-    input[type="text"], textarea, select{width:100%;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.02);color:#fff}
-    textarea{min-height:64px;resize:vertical}
-    .row{display:flex;gap:8px}
-    .small{flex:1}
-    .btn{display:inline-block;margin-top:10px;padding:8px 12px;border-radius:10px;background:var(--accent);color:#001;border:none;cursor:pointer;font-weight:700}
-    /* krathongs area */
-    .pond{position:absolute;inset:auto 6% 6% 6%;z-index:2;pointer-events:none} /* container for krathong elements */
-    .krathong{position:absolute;bottom:8px;left:50%;transform:translateX(-50%) translateY(0);pointer-events:auto;transition:transform 2.2s ease, opacity 1s;will-change:transform,opacity}
-    .krathong .img{display:block;transform-origin:center center}
-    .krathong .label{position:absolute;left:50%;transform:translateX(-50%);bottom:-28px;background:rgba(0,0,0,0.4);padding:3px 8px;border-radius:8px;font-size:12px;color:#fff}
-    /* hand animation */
-    .hand{position:absolute;right:20%;bottom:60px;width:160px;height:120px;z-index:6;opacity:0;pointer-events:none}
-    .hand img{width:100%;height:auto;display:block}
-    .sparkle{position:absolute;top:0;left:0;right:0;bottom:0;pointer-events:none}
-    .sparkle .p{position:absolute;width:6px;height:6px;border-radius:50%;background:rgba(255,230,160,0.95);box-shadow:0 0 8px rgba(255,230,160,0.9);opacity:0.9;animation:float 2.2s linear infinite}
-    @keyframes float{0%{transform:translateY(0) scale(0.7)}50%{transform:translateY(-10px) scale(1)}100%{transform:translateY(-20px) scale(0.6);opacity:0}}
-    /* zoom & rotate handles for preview */
-    .preview{margin-top:8px;display:flex;gap:8px;align-items:center}
-    .preview canvas,#previewImg{width:120px;height:120px;border-radius:12px;border:1px solid rgba(255,255,255,0.06);background:#0b2740}
-    .note{font-size:12px;color:#bfefff;margin-top:8px}
-    /* responsive */
-    @media(max-width:720px){.controls{left:10px;right:10px;width:auto}.card{width:92%}}
-  </style>
-</head>
-<body>
-  <div class="scene">
-    <div class="moon" aria-hidden="true"></div>
-    <div class="stars" id="stars"></div>
+// script.js
 
-    <!-- river -->
-    <div class="river" id="river">
-      <div class="waves"></div>
-      <!-- krathongs render container -->
-      <div class="pond" id="pond"></div>
-    </div>
+// ---------- Firebase config (ใช้ของคุณตามที่ยืนยัน) ----------
+const firebaseConfig = {
+  apiKey: "AIzaSyCwRRNmJYDalK4bugLZJ7x1CDy9VQAFG6o",
+  authDomain: "freelovetoh.firebaseapp.com",
+  projectId: "freelovetoh",
+  storageBucket: "freelovetoh.firebasestorage.app",
+  messagingSenderId: "54503548255",
+  appId: "1:54503548255:web:2f3f7973606fcbd39a42ea",
+  measurementId: "G-0QE353C4PY",
+  databaseURL: "https://freelovetoh-default-rtdb.asia-southeast1.firebasedatabase.app/"
+};
 
-    <!-- Sparkle overlay -->
-    <div class="sparkle" id="sparkle"></div>
+// init firebase (compat)
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+const krRef = db.ref('krathongs');
 
-    <!-- hand animation -->
-    <div class="hand" id="hand">
-      <!-- simple hand svg -->
-      <img src="data:image/svg+xml;utf8,
-      <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 80'>
-        <path d='M10 60c5-12 25-12 35-6c8 5 20 4 28-6c6-8 14-10 18-6' fill='none' stroke='%23fbd38d' stroke-width='5' stroke-linecap='round' stroke-linejoin='round'/>
-      </svg>" alt="hand" />
-    </div>
+// DOM
+const enterBtn = document.getElementById('enterBtn');
+const welcome = document.getElementById('welcome');
+const ytFrame = document.getElementById('ytFrame');
+const ytWrap = document.getElementById('ytWrap');
 
-    <!-- controls -->
-    <div class="controls" id="controls" aria-hidden="false">
-      <div class="panel">
-        <label>เลือกแบบกระทง (10 แบบ)</label>
-        <select id="templateSelect"></select>
+const templateImg = document.getElementById('templateImg');
+const rotateInput = document.getElementById('rotate');
+const scaleInput = document.getElementById('scale');
+const previewBtn = document.getElementById('previewBtn');
+const releaseBtn = document.getElementById('releaseBtn');
 
-        <div class="preview" style="margin-top:8px">
-          <canvas id="previewCanvas" width="120" height="120"></canvas>
-          <div style="flex:1">
-            <label>หมุน/ซูม</label>
-            <div class="row">
-              <input type="range" id="rotate" min="0" max="360" value="0" />
-              <input type="range" id="scale" min="50" max="180" value="100" />
-            </div>
-            <label style="margin-top:6px">หรืออัปโหลดรูปกระทง (แนะนำ <200KB)</label>
-            <input type="file" id="upload" accept="image/*" />
-          </div>
-        </div>
+const myNameInput = document.getElementById('myName');
+const loverInput = document.getElementById('loverName');
+const w1 = document.getElementById('wish1');
+const w2 = document.getElementById('wish2');
+const w3 = document.getElementById('wish3');
 
-        <label>ชื่อผู้ลอย</label>
-        <input id="myName" type="text" placeholder="ชื่อของคุณ" />
+const pond = document.getElementById('pond');
+const stars = document.getElementById('stars');
 
-        <label>ชื่อแฟน</label>
-        <input id="loverName" type="text" placeholder="ชื่อคนรัก" />
+// generate stars
+(function makeStars(){
+  for(let i=0;i<40;i++){
+    const s = document.createElement('div'); s.className='star';
+    s.style.left = Math.random()*100+'%'; s.style.top = Math.random()*35+'%';
+    s.style.width = (1+Math.random()*2)+'px'; s.style.height = s.style.width;
+    s.style.opacity = 0.5+Math.random()*0.8;
+    s.style.background = '#fff';
+    stars.appendChild(s);
+  }
+})();
 
-        <label>คำอวยพร (1)</label>
-        <input id="wish1" type="text" placeholder="ขอให้..." />
-        <label>คำอวยพร (2)</label>
-        <input id="wish2" type="text" placeholder="ขอให้..." />
-        <label>คำอวยพร (3)</label>
-        <input id="wish3" type="text" placeholder="ขอให้..." />
+// user id local
+const USER_ID = localStorage.getItem('fl_user') || 'u'+Date.now()+Math.floor(Math.random()*1000);
+localStorage.setItem('fl_user', USER_ID);
 
-        <div style="display:flex;gap:8px;margin-top:8px">
-          <button class="btn" id="previewBtn">ดูตัวอย่าง</button>
-          <button class="btn" id="releaseBtn">💖 ลอยกระทง</button>
-        </div>
+// enter button: hide overlay and enable autoplay for youtube
+enterBtn.addEventListener('click', ()=>{
+  welcome.style.display = 'none';
+  // add autoplay to iframe src (will trigger play because user gesture)
+  if(ytFrame){
+    const base = ytFrame.src.split('?')[0];
+    ytFrame.src = base + '?autoplay=1&loop=1&playlist=95s3Y8nVMV4&rel=0';
+    ytWrap.style.display='block';
+  }
+});
 
-        <div class="note">เมื่อกด "ลอยกระทง" กระทงจะถูกเก็บในระบบและแสดงให้ผู้ใช้อื่นเห็นแบบเรียลไทม์</div>
-      </div>
-    </div>
+// helper create element for krathong
+function createKrathongElement(data){
+  const el = document.createElement('div'); el.className='krathong';
+  const img = document.createElement('img');
+  img.src = data.image || templateImg.src;
+  // size + transform
+  const scale = data.scale || 1;
+  img.style.width = (120 * scale) + 'px';
+  img.style.transform = `rotate(${data.rotate || 0}deg)`;
+  el.appendChild(img);
 
-    <!-- welcome overlay -->
-    <div class="overlay" id="welcomeOverlay">
-      <div class="card">
-        <h1>ที่รักคะ เรามาลอยกระทงกันเถอะ</h1>
-        <p style="color:#eaf6ff">กดที่ปุ่มด้านล่างเพื่อเข้า และเริ่มประสบการณ์ร่วมกัน</p>
-        <button class="enter-btn" id="enter">เข้าร่วมและเริ่มเพลง</button>
-      </div>
-    </div>
+  const wishDiv = document.createElement('div'); wishDiv.className='wish';
+  wishDiv.textContent = data.wish1 || '';
+  el.appendChild(wishDiv);
 
-    <!-- ฝังวิดีโอ YouTube เป็นเพลงลอยกระทง -->
-<iframe width="0" height="0" style="display:none;"
-  src="https://www.youtube.com/embed/95s3Y8nVMV4?autoplay=1&loop=1&playlist=95s3Y8nVMV4&mute=0"
-  frameborder="0" allow="autoplay; encrypted-media" allowfullscreen>
-</iframe>
-    </audio>
-  </div>
+  const label = document.createElement('div'); label.className='label';
+  label.textContent = (data.myName||'') + (data.loverName? ' & '+data.loverName : '');
+  el.appendChild(label);
 
-  <!-- Firebase (compat approach for easy usage) -->
-  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
+  // final position (use stored xPercent and bottomPx)
+  el.style.left = (data.xPercent || 50) + '%';
+  // initially will start off-screen (bottom -150px) then animate to bottomPx
+  // ensure bottomPx exists
+  const finalBottom = data.bottomPx || (20 + Math.random()*200);
+  // set dataset id
+  if(data.id) el.dataset.id = data.id;
 
-  <script>
-  /*****************************
-   * ========== CONFIG =========
-   * แทนค่าตรงนี้ด้วย firebaseConfig ของคุณ (ผมใส่ค่าเดิมที่คุณให้มา)
-   *****************************/
-  const firebaseConfig = {
-    apiKey: "AIzaSyCwRRNmJYDalK4bugLZJ7x1CDy9VQAFG6o",
-    authDomain: "freelovetoh.firebaseapp.com",
-    projectId: "freelovetoh",
-    storageBucket: "freelovetoh.firebasestorage.app",
-    messagingSenderId: "54503548255",
-    appId: "1:54503548255:web:2f3f7973606fcbd39a42ea",
-    measurementId: "G-0QE353C4PY",
-    databaseURL: "https://freelovetoh-default-rtdb.asia-southeast1.firebasedatabase.app/"
+  // Append then animate
+  pond.appendChild(el);
+  // force reflow then animate
+  requestAnimationFrame(()=>{
+    // small delay to allow transition
+    setTimeout(()=>{ el.style.bottom = finalBottom + 'px'; }, 60);
+  });
+
+  // bobbing effect (subtle)
+  el.animate([{transform:'translateY(0)'},{transform:'translateY(-8px)'},{transform:'translateY(0)'}],{duration:3000,iterations:Infinity,delay:Math.random()*1000});
+  return el;
+}
+
+// listen to DB (child_added and value for persistence)
+krRef.on('value', snapshot => {
+  // clear and re-render all for persistent view
+  const obj = snapshot.val() || {};
+  pond.innerHTML = '';
+  Object.keys(obj).forEach(k=>{
+    const d = obj[k];
+    d.id = k;
+    createKrathongElement(d);
+  });
+});
+
+// release function: push new krathong
+releaseBtn.addEventListener('click', ()=>{
+  const myName = myNameInput.value.trim();
+  if(!myName){ alert('กรุณาใส่ชื่อของคุณ'); return; }
+  const loverName = loverInput.value.trim();
+  const wish1 = w1.value.trim();
+  const wish2 = w2.value.trim();
+  const wish3 = w3.value.trim();
+  const rotate = Number(rotateInput.value) || 0;
+  const scale = (Number(scaleInput.value)||100)/100;
+  const id = 'k'+Date.now();
+  const xPercent = 10 + Math.random()*80;
+  const bottomPx = 20 + Math.random()*220;
+
+  const data = {
+    owner: USER_ID,
+    myName, loverName, wish1, wish2, wish3,
+    rotate, scale, xPercent, bottomPx,
+    image: templateImg.src,
+    createdAt: firebase.database.ServerValue.TIMESTAMP
   };
 
-  // init
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.database();
+  // small hand animation (fade in/out)
+  showHandOnce();
 
-  // user identity (local)
-  const USER_ID = localStorage.getItem('fl_user') || ('u'+Date.now()+Math.floor(Math.random()*1000));
-  localStorage.setItem('fl_user', USER_ID);
-
-  /* ---------- template images (svg strings) 10 แบบ ----------
-     เรใช้ SVG แบบง่ายๆ เพื่อแสดงตัวอย่าง (หมุน/ซูมได้)
-     คุณอาจเปลี่ยนเป็น URL ภาพจริงหรืออัปโหลดด้วย input file
-  */
-  const templates = [
-    {id:'t1',name:'ดอกไม้',svg:`<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 120'><g><circle cx='60' cy='60' r='36' fill='#ffd54a'/><path d='M60 10 L68 40 L96 44 L72 64 L78 94 L60 78 L42 94 L48 64 L24 44 L52 40 Z' fill='#ffb74d'/></g></svg>`},
-    {id:'t2',name:'บัว',svg:`<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 120'><g><ellipse cx='60' cy='72' rx='40' ry='20' fill='#fff7e6'/><path d='M60 32 C70 48 80 44 84 54 C62 56 60 80 60 80 C60 80 58 56 36 54 C40 44 50 48 60 32 Z' fill='#ffd1a9'/></g></svg>`},
-    {id:'t3',name:'หัวใจ',svg:`<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 120'><path d='M60 84 L38 64 C22 48 36 26 54 34 C60 36 66 36 72 34 C90 26 104 48 88 64 L66 84 Z' fill='#ff6b81'/></svg>`},
-    {id:'t4',name:'เทียน',svg:`<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 120'><rect x='36' y='44' width='48' height='36' rx='8' fill='#ffe0b2'/><path d='M60 28 C62 22 58 18 60 12 C62 18 58 22 60 28 Z' fill='#fff59d'/></svg>`},
-    {id:'t5',name:'ดาว',svg:`<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 120'><polygon points='60,14 72,46 106,46 78,66 88,98 60,78 32,98 42,66 14,46 48,46' fill='#fff176'/></svg>`},
-    {id:'t6',name:'กลีบดอก',svg:`<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 120'><g fill='#ffcc80'><ellipse cx='60' cy='40' rx='12' ry='28'/><ellipse cx='82' cy='60' rx='12' ry='28' transform='rotate(45 82 60)'/><ellipse cx='38' cy='60' rx='12' ry='28' transform='rotate(-45 38 60)'/><ellipse cx='60' cy='80' rx='12' ry='28'/></g></svg>`},
-    {id:'t7',name:'ไม้ไผ่',svg:`<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 120'><rect x='26' y='50' width='68' height='20' rx='10' fill='#c8e6c9'/></svg>`},
-    {id:'t8',name:'ใบไม้',svg:`<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 120'><path d='M20 60 C40 40 80 40 100 60 C80 80 40 80 20 60 Z' fill='#a5d6a7'/></svg>`},
-    {id:'t9',name:'แพ',svg:`<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 120'><rect x='20' y='56' width='80' height='18' rx='10' fill='#ffe0b2'/><circle cx='60' cy='50' r='8' fill='#fff59d'/></svg>`},
-    {id:'t10',name:'วินเทจ',svg:`<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 120'><g fill='#ffd7a1'><rect x='24' y='46' width='72' height='28' rx='12'/><circle cx='60' cy='36' r='8' fill='#fff2d6'/></g></svg>`}
-  ];
-
-  // DOM refs
-  const welcomeOverlay = document.getElementById('welcomeOverlay');
-  const enterBtn = document.getElementById('enter');
-  const bgm = document.getElementById('bgm');
-  const templateSelect = document.getElementById('templateSelect');
-  const previewCanvas = document.getElementById('previewCanvas');
-  const ctx = previewCanvas.getContext('2d');
-  const rotateInput = document.getElementById('rotate');
-  const scaleInput = document.getElementById('scale');
-  const uploadInput = document.getElementById('upload');
-  const previewBtn = document.getElementById('previewBtn');
-  const releaseBtn = document.getElementById('releaseBtn');
-  const pond = document.getElementById('pond');
-  const hand = document.getElementById('hand');
-  const sparkle = document.getElementById('sparkle');
-
-  // fill templates select
-  templates.forEach(t=> {
-    const opt = document.createElement('option');
-    opt.value = t.id; opt.textContent = t.name;
-    templateSelect.appendChild(opt);
-  });
-
-  // preview state
-  let currentDataURL = null;
-  let currentTemplate = templates[0].svg;
-  let currentRotate = 0;
-  let currentScale = 1;
-  let uploadedDataURL = null;
-
-  // draw SVG to canvas for preview
-  function renderPreview() {
-    const w = previewCanvas.width, h = previewCanvas.height;
-    ctx.clearRect(0,0,w,h);
-    const svgString = uploadedDataURL ? `<image href="${uploadedDataURL}" width="${w-10}" height="${h-10}" x="5" y="5"/>` : currentTemplate;
-    const final = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 120'><g transform='translate(60 60) rotate(${currentRotate}) scale(${currentScale}) translate(-60 -60)'>${svgString}</g></svg>`;
-    const img = new Image();
-    const blob = new Blob([final],{type:'image/svg+xml;charset=utf-8'});
-    const url = URL.createObjectURL(blob);
-    img.onload = ()=>{ ctx.drawImage(img,0,0,w,h); URL.revokeObjectURL(url); currentDataURL = previewCanvas.toDataURL('image/png'); };
-    img.onerror = ()=>{ URL.revokeObjectURL(url); };
-    img.src = url;
-  }
-
-  // controls listeners
-  templateSelect.addEventListener('change', e=>{ const id=e.target.value; const t=templates.find(x=>x.id===id); currentTemplate=t.svg; uploadedDataURL=null; renderPreview(); });
-  rotateInput.addEventListener('input', e=>{ currentRotate = +e.target.value; renderPreview(); });
-  scaleInput.addEventListener('input', e=>{ currentScale = (+e.target.value)/100; renderPreview(); });
-  uploadInput.addEventListener('change', e=>{
-    const f = e.target.files[0]; if(!f) return;
-    if(f.size>300*1024){ alert('กรุณาอัปโหลดไฟล์เล็กกว่า 300KB'); return; }
-    const reader = new FileReader();
-    reader.onload = ()=>{ uploadedDataURL = reader.result; renderPreview(); };
-    reader.readAsDataURL(f);
-  });
-  previewBtn.addEventListener('click', ()=>{ renderPreview(); alert('ดูตัวอย่างทางซ้าย'); });
-
-  // welcome enter: start music and hide overlay
-  enterBtn.addEventListener('click', ()=>{
-    welcomeOverlay.style.display='none';
-    // try play audio
-    bgm.play().catch(()=>{/* browser blocked autoplay until gesture; user clicked so usually ok */});
-  });
-
-  // sparkle particles
-  function spawnSparkles(){
-    sparkle.innerHTML='';
-    for(let i=0;i<20;i++){
-      const d = document.createElement('div'); d.className='p';
-      d.style.left = Math.random()*100+'%';
-      d.style.top = Math.random()*60+'%';
-      d.style.animationDelay = (Math.random()*2)+'s';
-      d.style.opacity = (0.5+Math.random()*0.7);
-      sparkle.appendChild(d);
-    }
-  }
-  spawnSparkles();
-
-  // utility to create krathong element
-  function createKrathongEl(data){
-    const el = document.createElement('div'); el.className='krathong';
-    // inner content: image (svg or uploaded) + label(s)
-    const imgWrap = document.createElement('div'); imgWrap.className='img';
-    // construct image node
-    const img = new Image();
-    if(data.image){ img.src = data.image; } else {
-      // build svg with transform
-      const svg = data.templateSvg;
-      const finalSvg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 120'>
-        <g transform='translate(60 60) rotate(${data.rotate}) scale(${data.scale}) translate(-60 -60)'>${svg}</g></svg>`;
-      const bb = 'data:image/svg+xml;utf8,' + encodeURIComponent(finalSvg);
-      img.src = bb;
-    }
-    img.style.width = (100* (data.scale||1))+'px';
-    img.style.height = 'auto';
-    img.style.transform = `rotate(${data.rotate||0}deg)`;
-    imgWrap.appendChild(img);
-    // label: names
-    const label = document.createElement('div'); label.className='label';
-    label.textContent = `${data.myName || ''}${data.loverName ? ' & ' + data.loverName : ''}`;
-    // wish popup small
-    const wishBubble = document.createElement('div');
-    wishBubble.style.position='absolute';
-    wishBubble.style.bottom='56px';
-    wishBubble.style.left='50%';
-    wishBubble.style.transform='translateX(-50%)';
-    wishBubble.style.background='rgba(0,0,0,0.6)';
-    wishBubble.style.padding='6px 10px';
-    wishBubble.style.borderRadius='10px';
-    wishBubble.style.fontSize='12px';
-    wishBubble.style.color='#fff';
-    wishBubble.textContent = data.wish1 || '';
-    el.appendChild(imgWrap);
-    el.appendChild(label);
-    el.appendChild(wishBubble);
-    // sparkle inside krathong (candle effect)
-    const smallSpark = document.createElement('div'); smallSpark.style.position='absolute';
-    smallSpark.style.top='8px'; smallSpark.style.left='50%'; smallSpark.style.transform='translateX(-50%)';
-    smallSpark.innerHTML = `<div style="width:6px;height:6px;border-radius:50%;background:${'#fff2a8'};box-shadow:0 0 6px #ffd54a"></div>`;
-    el.appendChild(smallSpark);
-    // position
-    el.style.left = (data.xPercent||50) + '%';
-    el.style.bottom = (data.bottomPx||12) + 'px';
-    // set unique id attribute
-    if(data.id) el.dataset.id=data.id;
-    // hover reveal wishes (concatenate)
-    el.addEventListener('mouseenter',()=>{ wishBubble.textContent = [data.wish1,data.wish2,data.wish3].filter(Boolean).join(' • '); });
-    el.addEventListener('mouseleave',()=>{ wishBubble.textContent = data.wish1 || ''; });
-    return el;
-  }
-
-  // render all from DB snapshot
-  function renderAll(snapshot){
-    const obj = snapshot.val() || {};
-    pond.innerHTML = '';
-    Object.keys(obj).forEach(k=>{
-      const d = obj[k];
-      d.id = k;
-      const el = createKrathongEl(d);
-      pond.appendChild(el);
-      // animate from bottom to stored bottom with slight hand-off transition
-      // set transform to simulate gentle float (we just set bottom)
-      el.style.transition = 'transform 1.6s ease, opacity 1s';
-      // small bobbing animation
-      el.animate([{transform:'translateY(0)'},{transform:'translateY(-8px)'},{transform:'translateY(0)'}],{duration:3000,iterations:Infinity,delay:(Math.random()*1000)});
+  krRef.child(id).set(data)
+    .then(()=> {
+      // success: nothing else needed because DB listener renders all
+      console.log('ลอยแล้ว', id);
+    })
+    .catch(err => {
+      console.error(err);
+      alert('เกิดข้อผิดพลาดในการลอยกระทง ลองใหม่');
     });
+});
+
+// hand visual (simple): fade in then out
+function showHandOnce(){
+  let h = document.querySelector('.hand');
+  if(!h){
+    h = document.createElement('div'); h.className='hand';
+    h.innerHTML = `<img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 80'><path d='M10 60c5-12 25-12 35-6c8 5 20 4 28-6c6-8 14-10 18-6' fill='none' stroke='%23fbd38d' stroke-width='5' stroke-linecap='round' stroke-linejoin='round'/></svg>" alt="hand">`;
+    document.body.appendChild(h);
   }
+  h.style.opacity = 1;
+  h.style.transform = 'translateY(0)';
+  setTimeout(()=>{ h.style.transform='translateY(40px)'; }, 50);
+  setTimeout(()=>{ h.style.opacity=0; }, 1100);
+}
 
-  // DB listener
-  const krRef = db.ref('krathongs');
-  krRef.on('value', snapshot=>renderAll(snapshot));
-
-  // release function
-  releaseBtn.addEventListener('click', ()=>{
-    const myName = document.getElementById('myName').value.trim();
-    const loverName = document.getElementById('loverName').value.trim();
-    const wish1 = document.getElementById('wish1').value.trim();
-    const wish2 = document.getElementById('wish2').value.trim();
-    const wish3 = document.getElementById('wish3').value.trim();
-    if(!myName){ alert('กรุณาใส่ชื่อของคุณ'); return; }
-    // prepare data
-    const id = 'k'+Date.now();
-    const xPercent = 10 + Math.random()*80; // random x
-    const bottomPx = 10 + Math.random()*200; // final bottom
-    const rotate = currentRotate || 0;
-    const scale = currentScale || 1;
-    const templateId = templateSelect.value;
-    const t = templates.find(tt=>tt.id===templateId);
-    const templateSvg = uploadedDataURL ? null : (t? t.svg : templates[0].svg);
-    const image = uploadedDataURL || null;
-
-    // display hand animation: bring hand down then up
-    hand.style.opacity = 1;
-    hand.style.transition = 'transform 900ms ease, opacity 600ms';
-    hand.style.transform = 'translateY(0) translateX(0)';
-    setTimeout(()=>{ hand.style.transform='translateY(40px)'; },50);
-    setTimeout(()=>{ hand.style.opacity = 0; },1100);
-
-    // push to DB
-    krRef.child(id).set({
-      owner: USER_ID,
-      myName, loverName,
-      wish1, wish2, wish3,
-      xPercent, bottomPx,
-      rotate, scale,
-      templateId,
-      templateSvg,
-      image,
-      createdAt: firebase.database.ServerValue.TIMESTAMP
-    }).then(()=>{
-      // optional: show small confetti/sparkle around new krathong
-      spawnSparkles();
-    }).catch(err=>{ console.error(err); alert('ไม่สามารถลอยกระทงได้ ลองใหม่'); });
-  });
-
-  // initial render preview
-  renderPreview();
-
-  // create background stars
-  (function makeStars(){
-    const s = document.getElementById('stars');
-    for(let i=0;i<40;i++){
-      const el = document.createElement('div'); el.className='star';
-      el.style.left = (Math.random()*100)+'%';
-      el.style.top = (Math.random()*35)+'%';
-      const scale = Math.random()*1.6; el.style.width = (2*scale)+'px'; el.style.height=(2*scale)+'px';
-      el.style.opacity = (0.4 + Math.random()*0.8);
-      el.style.transform = `translateZ(0)`;
-      s.appendChild(el);
-    }
-  })();
-
-  // safety: simple cleanup or limit size to avoid DB overload can be added here
-  </script>
-</body>
-</html>
+// optional preview (shows in pond temporarily before saving)
+previewBtn.addEventListener('click', ()=>{
+  const rotate = Number(rotateInput.value) || 0;
+  const scale = (Number(scaleInput.value)||100)/100;
+  const xPercent = 50; // preview center
+  const data = { rotate, scale, xPercent, bottomPx:120, myName: myNameInput.value||'คุณ', loverName: loverInput.value||'', wish1: w1.value||'' , image: templateImg.src };
+  // create element that will auto-remove after a few seconds
+  const el = createKrathongElement(data);
+  setTimeout(()=>{ el.remove(); }, 4000);
+});
